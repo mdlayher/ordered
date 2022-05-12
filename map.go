@@ -129,23 +129,20 @@ type KeyValue[K comparable, V any] struct {
 	Value V
 }
 
-// Range ranges over all key/value pairs in map while applying fn, if fn is not
-// nil. There is no way to stop iteration early using Range; see Map.Iter for
-// more advanced uses.
-func (m *Map[K, V]) Range(fn func(kv KeyValue[K, V])) {
+// Range produces a slice of all KeyValue pairs from Map for use in a for range
+// loop. See Map.Iter for more fine-grained iteration control.
+func (m *Map[K, V]) Range() []KeyValue[K, V] {
 	m.check(ro)
 
-	if fn == nil {
-		// Do nothing.
-		return
+	kvs := make([]KeyValue[K, V], 0, len(m.keys))
+	for _, k := range m.keys {
+		kvs = append(kvs, KeyValue[K, V]{
+			Key:   k,
+			Value: m.m[k],
+		})
 	}
 
-	mi := m.Iter()
-	defer mi.Close()
-
-	for kv := mi.Next(); kv != nil; kv = mi.Next() {
-		fn(*kv)
-	}
+	return kvs
 }
 
 // A MapIterator is an iteration cursor over a Map. A MapIterator must be

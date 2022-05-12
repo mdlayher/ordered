@@ -101,14 +101,14 @@ func TestMapRange(t *testing.T) {
 		got  []string
 	)
 
-	m.Range(func(kv ordered.KeyValue[string, int]) {
+	for _, kv := range m.Range() {
 		got = append(got, kv.Key)
 
 		// Reads okay during iteration.
 		if diff := cmp.Diff(kv.Value, m.Get(kv.Key)); diff != "" {
 			t.Fatalf("unexpected value for key %q (-want +got):\n%s", kv.Key, diff)
 		}
-	})
+	}
 
 	if diff := cmp.Diff(want, got); diff != "" {
 		t.Fatalf("unexpected keys (-want +got):\n%s", diff)
@@ -178,10 +178,9 @@ func TestMapIterateEmpty(t *testing.T) {
 	m := ordered.NewMap[string, int](ordered.Less[string])
 
 	// Never called, no keys.
-	m.Range(nil)
-	m.Range(func(_ ordered.KeyValue[string, int]) {
-		t.Fatal("range function called for empty map")
-	})
+	for range m.Range() {
+		t.Fatal("range loop entered for empty map")
+	}
 
 	mi := m.Iter()
 	defer mi.Close()
