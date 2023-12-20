@@ -10,6 +10,7 @@ import (
 
 // An op is a read-only or read-write operation, used to annotate invariant
 // checks.
+//
 //enumcheck:exhaustive
 type op int
 
@@ -187,11 +188,11 @@ func (mi *MapIterator[K, V]) Close() {
 // KeyValue pairs are present. Next is intended to be used in a for loop, in the
 // format:
 //
-//  mi := m.Iter()
-//  defer mi.Close()
-//  for kv := mi.Next(); kv != nil; kv = mi.Next() {
-//      // use kv
-//  }
+//	mi := m.Iter()
+//	defer mi.Close()
+//	for kv := mi.Next(); kv != nil; kv = mi.Next() {
+//	    // use kv
+//	}
 func (mi *MapIterator[K, V]) Next() *KeyValue[K, V] {
 	mi.check()
 
