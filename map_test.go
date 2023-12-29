@@ -1,6 +1,7 @@
 package ordered_test
 
 import (
+	stdcmp "cmp"
 	"fmt"
 	"testing"
 
@@ -11,7 +12,7 @@ import (
 func ExampleMap() {
 	// Create a map of string keys and integer elements, ordered by lexical
 	// comparison of the string keys.
-	m := ordered.NewMap[string, int](ordered.Less[string])
+	m := ordered.NewMap[string, int](stdcmp.Compare)
 	m.Set("foo", 1)
 	m.Set("bar", 2)
 	m.Set("baz", 3)
@@ -175,7 +176,7 @@ func TestMapIterateMultiple(t *testing.T) {
 }
 
 func TestMapIterateEmpty(t *testing.T) {
-	m := ordered.NewMap[string, int](ordered.Less[string])
+	m := ordered.NewMap[string, int](stdcmp.Compare)
 
 	// Never called, no keys.
 	for range m.Range() {
@@ -268,7 +269,7 @@ func TestMapMethodPanics(t *testing.T) {
 }
 
 func testMap() *ordered.Map[string, int] {
-	m := ordered.NewMap[string, int](ordered.Less[string])
+	m := ordered.NewMap[string, int](stdcmp.Compare)
 	m.Set("foo", 1)
 	m.Set("bar", 2)
 	m.Set("baz", 3)

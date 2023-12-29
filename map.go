@@ -1,11 +1,8 @@
 package ordered
 
 import (
+	"slices"
 	"sync/atomic"
-
-	"golang.org/x/exp/constraints"
-	"golang.org/x/exp/maps"
-	"golang.org/x/exp/slices"
 )
 
 // An op is a read-only or read-write operation, used to annotate invariant
@@ -33,27 +30,24 @@ type Map[K comparable, V any] struct {
 	// A sorted list of keys stored in the map and the function to compare those
 	// keys.
 	keys []K
-	less func(a, b K) bool
+	cmp  func(a, b K) int
 
 	// The actual underlying map storage.
 	m map[K]V
 }
 
-// Less is a comparison function for key types which are ordered. It is a
-// convenience function for comparing primitive types with NewMap.
-func Less[K constraints.Ordered](a, b K) bool { return a < b }
-
-// NewMap creates a *Map[K, V] which uses the comparison function less to order
-// the keys in the map. less must not be nil or NewMap will panic. For primitive
-// types, Less can be used as a comparison function.
-func NewMap[K comparable, V any](less func(a, b K) bool) *Map[K, V] {
-	if less == nil {
-		panic("ordered: NewMap must use a non-nil less function")
+// NewMap creates a *Map[K, V] which uses the a comparison function to order the
+// keys in the map. cmp must not be nil or NewMap will panic. For types which
+// meet the [cmp.Ordered] constraint, [cmp.Compare] can be used as a comparison
+// function.
+func NewMap[K comparable, V any](cmp func(a, b K) int) *Map[K, V] {
+	if cmp == nil {
+		panic("ordered: NewMap must use a non-nil cmp function")
 	}
 
 	return &Map[K, V]{
-		m:    make(map[K]V),
-		less: less,
+		m:   make(map[K]V),
+		cmp: cmp,
 	}
 }
 
@@ -85,7 +79,7 @@ func (m *Map[K, V]) Set(k K, v V) {
 	if _, ok := m.m[k]; !ok {
 		// Always sort when a new key is inserted.
 		m.keys = append(m.keys, k)
-		slices.SortFunc(m.keys, m.less)
+		slices.SortFunc(m.keys, m.cmp)
 	}
 
 	m.m[k] = v
@@ -110,12 +104,12 @@ func (m *Map[K, V]) Reset() {
 	m.check(rw)
 
 	m.keys = m.keys[:0]
-	maps.Clear(m.m)
+	clear(m.m)
 }
 
 // check checks the Map's invariants for a given operation type.
 func (m *Map[K, V]) check(op op) {
-	if m == nil || m.less == nil {
+	if m == nil || m.cmp == nil {
 		panic("ordered: a Map must be constructed using NewMap")
 	}
 
